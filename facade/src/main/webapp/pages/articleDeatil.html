@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="UTF-8">
+		<title>详细文章</title>
+		<link href="/css/articleDetail.css" rel="stylesheet" />
+		<link href="/css/base.css" rel="stylesheet">
+		<link href="/css/index.css" rel="stylesheet">
+		<link href="/css/bootstrap.min.css" rel="stylesheet" />
+		<script src="/js/jquery-3.1.1.min.js"></script>
+		<script src="/js/bootstrap.js"></script>
+	</head>
+	<script>
+        s=window.location.pathname.split("/");
+        s_title=s[3];
+        s_id=s[4];
+        s_label=s[5];
+        s_category=s[6];
+        s_time=s[7];
+        s_pv=s[8]-(-1);
+		flag_Viewthereply=-1;
+		$(function() {
+		    init();
+            load_personal_data();
+			hide();
+			move_loop();
+		});
+
+		/**
+		 * 初始化文章，刚进入此页面时还没有加载数据，要根据url中的信息使用
+		 * ajax来获取数据
+		 * */
+		function init() {
+			murl='/article/getArticleSubject/'+s_title+'/'+s_id+'/'+s_label+'/'+s_category+'/'+s_time+'/'+s_pv;
+			$.ajax({
+				url:murl,
+				method:'get',
+				async:false,
+				success:function (result) {
+					var head='<h2>'+result.title+'</h2>' +
+                        '<p class="article-head-b">'+result.time+'</p>' +
+                        '<p class="article-head-c">阅读数：'+result.pv+'</p>' +
+                        '<hr class="article-head-d" />';
+					var body=result.article+'<hr class="mhr" />';
+					var label='';
+					for(i=0;i<result.label.length;i++){
+					    label+='<li><button type="button" class="btn btn-default" onclick="jump(\'#\')">'+result.label[i]+'</button></li>'
+					}
+					var articleCategory='';
+					for(i=0;i<result.articleCategory.length;i++){
+					    articleCategory+='<li><a href="#">'+result.articleCategory[i]+'</a></li>';
+					}
+					var tail='<ul>' +
+                        '<li>文章标签:</li>' +
+                        label+
+                        '<li class="clear"></li>' +
+                        '</ul>' +
+                        '<div class="clear"></div>' +
+                        '<ul id="article-tail-category">' +
+                        '<li>个人分类:</li>' +
+                        articleCategory +
+                        '<li class="clear"></li>' +
+                        '</ul>\n' +
+                        '<div class="clear"></div>' +
+                        '<hr class="mhr"/>'
+                    $("#article-head").append(head);
+					$("#article-body").append(body);
+					$("#article-tail").append(tail);
+                }
+			})
+        }
+        /**
+         * 加载博主的个人资料，加载完成后再加载个人分类,少查询一次用户id
+         * */
+        function load_personal_data(){
+            $.ajax({
+                url:'/user/getPersonalData/'+s_id,
+                method:'get',
+                success:function (result) {
+                    pd_name=result.name;
+                    pd_picture=result.picture;
+                    pd_articleNumber=result.articleNumber;
+                    pd_fansNumber=result.fansNumber;
+                    pd_followNumber=result.followNumber;
+                    html='<img src="/getPicture?url='+pd_picture+'" class="card-head"/>' +
+                        '<p class="card-name">'+pd_name+'</p>' +
+                        '<button type="button" class="btn btn-default" style="margin-left: 21px;height: 31px;width: 76px;margin-top: 4px;">关注</button>' +
+                        '<p class="clear"></p>' +
+                        '<ul class="card-sl">' +
+                        '<li>文章</li>' +
+                        '<li>&nbsp;'+pd_articleNumber+'</li>' +
+                        '</ul>' +
+                        '<ul class="card-sl">' +
+                        '<li>粉丝</li>' +
+                        '<li>'+pd_fansNumber+'</li>' +
+                        '</ul>' +
+                        '<ul>' +
+                        '<li>关注</li>' +
+                        '<li>&nbsp;&nbsp;'+pd_followNumber+'</li>' +
+                        '</ul>'
+                    dom_obj=$("#card .panel-body");
+                    dom_obj.append(html);
+                    load_private_category();
+                }
+            })
+        }
+        /**
+        *  加载个人分类
+        */
+        function load_private_category(){
+            $.ajax({
+				url:'/user/getPrivateCategory/'+s_id,
+				method:'get',
+				success:function(result){
+				    s='';
+                    var i=0;
+				    for(;i<result.length&&i<6;i++){
+                        json=result[i];
+                        s+='<li><a href="'+json.categoryId+'">'+json.name+'</a><p>'+json.number+'篇</p><div class="clear"></div></li>'
+                    }
+                    //如果个人分类超过五篇，多余的就先隐藏
+				    if(result.length>=6){
+				        s+='<li style="cursor: pointer;" id="private-category-more" onclick="showMoreCategory()">...</li>';
+                        for(;i<result.length;i++){
+                            json=result[i];
+                            s+='<li class="hide"><a href="'+json.categoryId+'">'+json.name+'</a><p>'+json.number+'篇</p><div class="clear"></div></li>'
+                        }
+                    }
+                    $("#private-category-a").append(s);
+				}
+			})
+        }
+        /**
+		 * 点击某元素之外，隐藏该元素
+		 */
+		function hide() {
+			$("body").bind("click", function(evt) {
+				if($(evt.target).parents("#select-fa").length == 0) {
+					$('#user-select').hide();
+				}
+				if($(evt.target).parents("#say").length == 0) {
+					$('#say button').hide();
+				}
+			});
+		}
+		 /**
+		 * 出现发表评论按钮
+		 */
+		function showbtn(){
+			$("#say button").show();
+		}
+		function showUserSelect(){
+			$("#user-select").show();
+		}
+		function viewthereply(a){
+			self=$(a);
+			father=self.parent();
+			if(flag_Viewthereply==1){
+				father.children('li.comment-flag').slideUp();
+			}
+			else{
+				father.children('li.comment-flag').slideDown();
+			}
+			flag_Viewthereply*=-1;
+		}
+		/**
+		 * 显示模态框
+		 */
+		function modalFrame(){
+			 $('#myModal').modal('show');
+		}
+		/**
+		 * 显示更多的个人分类
+		*/
+		function showMoreCategory() {
+		    $("#private-category-more").remove();
+            $("#private-category-a li").removeClass("hide");
+        }
+		/**
+         * 页面跳转
+         */
+        function jump(url){
+            window.open(url,'_blank');
+        }
+	</script>
+
+	<body>
+		<header style="height: 54px;">
+			<div id="hgtopnav">
+				<ul>
+					<li><img class="top-icon" src="/images/icon.jpg" /></li>
+					<li><input class="top-search"/></li>
+					<li><p class="top-write">写博客</p></li>
+					<li><p class="regist-login">登陆 | 注册</p></li>
+					<li style="position: inherit;" id="select-fa">
+						<img class="user-head" src="/images/02.jpg" onclick="showUserSelect()"/>
+						<div id="user-select" style="margin-left:886px;z-index: 100;margin-top: 15px;">
+							<ul>
+								<li><a href="#">我的文章</a></li>
+								<li><a href="#">消息<span style="color: #c92027;">(1)</span></a></li>
+								<li><a href="#">账号设置</a></li>
+								<li><a href="#">退出</a></li>
+							</ul>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</header>
+		<div style="width: 1200px;height: 1000px;margin:0 auto;" class="row">
+			<div id="left" class="col-lg-9">
+				<div id="article-head">
+					<!--<h2>最简单的spring集成redis</h2>-->
+					<!--<p class="article-head-b">2018年03月21日 23:51:46</p>-->
+					<!--<p class="article-head-c">阅读数：105</p>-->
+					<!--<hr class="article-head-d" />-->
+				</div>
+				<div id="article-body">
+					<!--asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章asdasdasd文章-->
+					<!--<hr class="mhr" />-->
+				</div>
+				<div id="article-tail">
+					<!--<ul>-->
+						<!--<li>文章标签:</li>-->
+						<!--<li><button type="button" class="btn btn-default" onclick="jump('#')">分布式</button></li>-->
+						<!--<li><button type="button" class="btn btn-default" onclick="jump('#')">大数据</button></li>-->
+						<!--<li><button type="button" class="btn btn-default" onclick="jump('#')">算法</button></li>-->
+						<!--<li class="clear"></li>-->
+					<!--</ul>-->
+					<!--<div class="clear"></div>-->
+					<!--<ul id="article-tail-category">-->
+						<!--<li>个人分类:</li>-->
+						<!--<li><a href="#">分布式学习</a></li>-->
+						<!--<li><a href="#">dubbo</a></li>-->
+						<!--<li class="clear"></li>-->
+					<!--</ul>-->
+					<!--<div class="clear"></div>-->
+					<!--<hr class="mhr"/>-->
+				</div>
+				<div id="article-comment">
+					<div id="say">
+						<div class="form-group">
+							<label>我要回复</label>
+							<textarea class="form-control" rows="3" onfocus="showbtn()"></textarea>
+						</div>
+						<button type="button" class="btn btn-primary" style="display:none;">提交</button>
+					</div>
+					<ul class="comment-out">
+						<li class="comment-head"><img src="/images/01.jpg"></li>
+						<li class="comment-name">克苏文</li>
+						<li class="comment-time">2018-07-10 17:52:02</li>
+						<li class="comment-click" onclick="modalFrame()">回复</li>
+						<li class="comment-core">您好啊，可以留一个联系方式吗我的是948102903</li>
+						<div class="clear"></div>
+					</ul>
+					<ul class="comment-out">
+						<li class="comment-head"><img src="/images/02.jpg"></li>
+						<li class="comment-name">阿萨德</li>
+						<li class="comment-time">2018-07-10 17:52:02</li>
+						<li class="comment-click" onclick="modalFrame()">回复</li>
+						<li class="comment-click" onclick="viewthereply(this)">查看回复(3)</li>
+						<li class="comment-core">你在最上面加入这两句话 ApplicationContext app = new ClassPathXmlApplicationContext("classpath:spring/spring-redis.xml"); RedisTemplate red</li>
+						<li class="comment-flag">
+							<ul class="comment-inner">
+								<li class="comment-name">秦莞尔</li>
+								<li class="comment-time">2018-07-10 18:02:00</li>
+								<li class="comment-core">你在最上面加入这两句话 ApplicationContext app = new ClassPathXmlApplicationContext("classpath:spring/spring-redis.xml"); RedisTemplate redisTemplate = (RedisTemplate) app.getBean("redisTemplate"); 意思是加载配置文件，从配置文件里面获取那个bean 才能进行操作，我刚刚弄完，希望能帮到后来的同学</li>
+								<div class="clear"></div>
+							</ul>
+						</li>
+						<li class="comment-flag">
+							<ul class="comment-inner">
+								<li class="comment-name">秦莞尔</li>
+								<li class="comment-time">2018-07-10 18:02:00</li>
+								<li class="comment-core">你在最上面加入这两句话 ApplicationContext app = new ClassPathXmlApplicationContext("classpath:spring/spring-redis.xml"); RedisTemplate redisTemplate = (RedisTemplate) app.getBean("redisTemplate"); 意思是加载配置文件，从配置文件里面获取那个bean 才能进行操作，我刚刚弄完，希望能帮到后来的同学</li>
+								<div class="clear"></div>
+							</ul>
+						</li>
+						<li class="comment-flag">
+							<ul class="comment-inner" style="margin-bottom: 12px;">
+								<li class="comment-name">阿萨达</li>
+								<li class="comment-time">2018-07-10 18:02:00</li>
+								<li class="comment-core">你在最上面加入这两句edis.xml"); RedisTemplate redisTemplate = (RedisTemplate) app.getBean("redisTemplate"); 意思是加载配置文件，从配置文件里面获取那个bean 才能进行操作，我刚刚弄完，希望能帮到后来的同学</li>
+								<div class="clear"></div>
+							</ul>
+						</li>
+						<div class="clear"></div>
+					</ul>
+				</div>
+				<nav aria-label="..."><!--分页按钮-->
+				  <ul class="pager">
+				    <li class="previous"><a href="#"><span aria-hidden="true">&larr;</span>上一页</a></li>
+				    <li class="next"><a href="#">下一页 <span aria-hidden="true">&rarr;</span></a></li>
+				  </ul>
+				</nav>
+				<div>
+					<div class="modal fade" id="myModal">
+					  <div class="modal-dialog">
+					    <div class="modal-content">
+					      <div class="modal-header">
+					        <button type="button" class="close" data-dismiss="modal">
+					           <span aria-hidden="true">&times;</span><span class="sr-only">Close</span>
+					        </button>
+					        <h4 class="modal-title">@克苏文</h4>
+					      </div>
+					      <div class="modal-body">
+					        <textarea class="form-control" rows="3"></textarea>
+					      </div>
+					      <div class="modal-footer">
+					        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+					        <button type="button" class="btn btn-primary">保存</button>
+					      </div>
+					    </div><!-- /.modal-content -->
+					  </div><!-- /.modal-dialog -->
+					</div><!-- /.modal -->
+				</div>
+			</div>
+			<div id="right" class="col-lg-3">
+				<div id="card">
+					<h2>个人资料</h2>
+					<div class="panel panel-default">
+  						<div class="panel-body">
+							<!--<img src="/images/02.jpg" class="card-head"/>-->
+							<!--<p class="card-name">混合动力火锅</p>-->
+							<!--<button type="button" class="btn btn-default" style="margin-left: 21px;height: 31px;width: 76px;margin-top: 4px;">关注</button>-->
+							<!--<p class="clear"></p>-->
+							<!--<ul class="card-sl">-->
+								<!--<li>文章</li>-->
+								<!--<li>&nbsp;16</li>-->
+							<!--</ul>-->
+							<!--<ul class="card-sl">-->
+								<!--<li>粉丝</li>-->
+								<!--<li>203</li>-->
+							<!--</ul>-->
+							<!--<ul>-->
+								<!--<li>关注</li>-->
+								<!--<li>&nbsp;&nbsp;6</li>-->
+							<!--</ul>-->
+						</div>
+					</div>
+				</div>
+				<div id="private-category">
+					<h2>个人分类</h2>
+					<div class="panel panel-default">
+  						<div class="panel-body">
+  							<ul id="private-category-a">
+  								<!--<li><a href="#">大数据</a><p>16篇</p><div class="clear"></div></li>-->
+  								<!--<li><a href="#">spring学习</a><p>26篇</p><div class="clear"></div></li>-->
+  								<!--<li><a href="#">c#</a><p>1篇</p><div class="clear"></div></li>-->
+  								<!--<li><a href="#">算法</a><p>3篇</p><div class="clear"></div></li>-->
+  								<!--<li><a href="#">设计模式</a><p>6篇</p><div class="clear"></div></li>-->
+  								<!--<li style="cursor: pointer;" id="private-category-more" onclick="showMoreCategory()">...</li>-->
+								<!--<li class="hide"><a href="#">java</a><p>19篇</p><div class="clear"></div></li>-->
+								<!--<li class="hide"><a href="#">C#</a><p>16篇</p><div class="clear"></div></li>-->
+  							</ul>
+						</div>
+					</div>
+				</div>
+				<div id="fill-background"  style="overflow: hidden;">
+					<img src="/images/timg.jpg" style="height: 500px;"/>
+					<script>
+						var flag_move_loop=1;
+						function move_loop(){
+							if(flag_move_loop==1){
+								flag_move_loop=-1;
+								$("#fill-background img").animate({marginLeft:"-=500px"},8000,move_loop);
+							}else{
+								flag_move_loop=1;
+								$("#fill-background img").animate({marginLeft:"+=500px"},8000,move_loop);
+							}
+						}
+					</script>
+				</div>
+			</div>
+			
+		</div>
+	</body>
+
+</html>

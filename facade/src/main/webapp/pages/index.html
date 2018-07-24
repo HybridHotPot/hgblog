@@ -1,0 +1,495 @@
+<!doctype html>
+<html>
+
+	<head>
+		<meta charset="gb2312">
+		<title>混合动力火锅博客</title>
+		<meta name="keywords" content="" />
+		<meta name="description" content="" />
+		<link href="/css/base.css" rel="stylesheet">
+		<link href="/css/index.css" rel="stylesheet">
+		<link rel="stylesheet" href="/css/bootstrap-table.css" />
+		<script type="text/javascript" src="/js/jquery-3.1.1.min.js"></script>
+		<script type="text/javascript" src="/js/sliders.js"></script>
+	</head>
+	<script>
+        var wztj_index=1;
+		$(function(){
+			hideUserSelect();
+            loadClick_New_Recommend();
+            loadWenZhangTuiJian(wztj_index);wztj_index++;
+            loadLabelCloud();
+		});
+
+        /**
+		 * 滚动加载【推荐文章】
+         */
+        $(window).on('scroll',function(){
+            scrollTop=Math.max(
+                //chrome
+                document.body.scrollTop,
+                //firefox/IE
+                document.documentElement.scrollTop);
+            windowHeight=(document.compatMode == "CSS1Compat")?document.documentElement.clientHeight:document.body.clientHeight;
+            documentHeight=Math.max(document.body.scrollHeight,document.documentElement.scrollHeight);
+            if(scrollTop+ windowHeight>= (documentHeight - 50/*滚动响应区域高度取50px*/)){
+                loadWenZhangTuiJian(wztj_index);
+                wztj_index++;
+            }
+        });
+
+        /**
+		 * 点击#user-select之外的元素，隐藏#user-select
+		 */
+		function hideUserSelect(){
+			$("body").bind("click",function(evt){
+            if($(evt.target).parents("#select-fa").length==0) 
+            {
+                $('#user-select').hide();
+            }
+            });
+		}
+
+        /**
+		 * 加载【文章推荐】，如果后台返回的某篇文章的标签数大于3，那就只留3个
+		 * index:页号
+         */
+        function loadWenZhangTuiJian(index) {
+			$.ajax({
+                url:'/article/recommends/'+index,
+                type:'get',
+                async:false,
+                beforeSend:function () {
+                    var s='<div id="jdt" class="progress">' +
+                        '  <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%">' +
+                        '  </div>' +
+                        '</div>'
+                    $("#article-recommends").append(s);
+                },
+                success:function (result) {
+                    $("#jdt").remove();
+                    for(var i=0;i<result.length;i++){
+                        var obj=result[i];
+                        //把多个文章标签分开
+                        var labels=obj.label;
+                        var strLabel='<span class="lm f_l">';
+                        for(j=0;j<labels.length;j++){
+                            strLabel+='<a href="article/1/'+labels[j]+'">'+labels[j]+'</a>&nbsp;&nbsp;';
+                        }
+                        strLabel+='</span>';
+                        //拼接html
+                        var str='<div class="blogs">' +
+                            '<figure><img src="/getPicture?url='+obj.cover+'"></figure>' +
+                            '<ul>' +
+                            '<h3><a href="/article/detail/'+obj.title+'/'+obj.id+'/'+obj.label+'/'+obj.articlecategory+'/'+obj.time+'/'+obj.pv+'">'+obj.title+'</a></h3>' +
+                            '<p>'+obj.description+'</p>' +
+                            '<p class="autor">'+strLabel+'<span class="dtime f_l">'+obj.time+'</span><span class="viewnum f_r">浏览（'+obj.pv+'）</span><span class="pingl f_r">评论（<a href="/comment/"'+obj.id+'>'+obj.commentNumber+'</a>）</span></p>' +
+                            '</ul>' +
+                            '</div>';
+                        $('#article-recommends').append(str);
+                    }
+                }
+            })
+        }
+
+        /**
+         * 加载标签云
+         */
+        function loadLabelCloud() {
+            $.ajax({
+                url:'/label/cloud',
+                type:'get',
+                async:false,
+                success:function (result) {
+                    var ul="";
+                    for(i=0;i<result.length;i++){
+                        if(i==14)
+                            break;
+                        var id=result[i].id;
+                        var name=result[i].name;
+                        ul+='<li><a href="/zzzzzzz?id='+id+'">'+name+'</a></li>';
+                    }
+                    ul='<ul>'+ul+'</ul>';
+                    $("#cloud").append(ul);
+                }
+            })
+        }
+
+        /**
+		 * 加载【点击排行】【最新文章】【站长推荐】
+         */
+        function loadClick_New_Recommend() {
+			$.ajax({
+				url:'/article/click_new_recommend',
+				type:'get',
+				async:false,
+				success:function (result) {
+					var ulClick="";
+					var ulNew="";
+					var ulRecommend="";
+					var top_new=result['最新文章'];
+					var top_click=result['点击排行'];
+					var top_recommend=result['站长推荐'];
+					var len=top_new.length;
+					for(i=0;i<len;i++){
+					    //生成点击排行
+					    var array=top_click[i].split(";");
+					    var article_title=array[0];
+						var article_id=array[1];
+						var li='<li><a href="/zzzzzzzz?id='+article_id+'" target="_blank">'+article_title+'</a></li>';
+						ulClick+=li;
+						//生成最新文章
+                        array=top_new[i].split(";");
+                        article_title=array[0];
+                        article_id=array[1];
+                        li='<li><a href="/zzzzzzzz?id='+article_id+'" target="_blank">'+article_title+'</a></li>';
+                        ulNew+=li;
+                        //生成站长推荐
+                        array=top_recommend[i].split(";");
+                        article_title=array[0];
+                        article_id=array[1];
+                        li='<li><a href="/zzzzzzzz?id='+article_id+'" target="_blank">'+article_title+'</a></li>';
+                        ulRecommend+=li;
+					}
+					ulClick='<ul>'+ulClick+'</ul>';
+                    ulNew='<ul>'+ulNew+'</ul>';
+                    ulRecommend='<ul>'+ulRecommend+'</ul>';
+                    $("#click-top").append(ulClick);
+                    $("#new-top").append(ulNew);
+                    $("#recommend-top").append(ulRecommend);
+                }
+			})
+        }
+
+        /**
+		 * 加载轮播
+         */
+        function loadCarouseArticle() {
+            var s;
+			$.ajax({
+				url:'/article/carousel',
+				type:'get',
+				async:false,
+				success:function (result) {
+				    var str='';
+					for(var i=0;i<result.length;i++){
+					    var obj=result[i];
+						$("#slide-runner").prepend('<a href="/article/detail/'+obj.articleId+'" target="_blank"><img id="slide-img-'+(i+1)+'" src="/getPicture?url='+obj.cover+'" alt="" /></a>');
+						if(i+1!=result.length)
+							str+='{' +
+                                '"id": "slide-img-'+(i+1)+'",' +
+                                '"client": "",' +
+                                '"desc": "'+obj.simpledesc+'"' +
+                                '},';
+						else
+						    str+='{' +
+                                '"id": "slide-img-'+(i+1)+'",' +
+                                '"client": "",' +
+                                '"desc": "'+obj.simpledesc+'"' +
+                                '}';
+					}
+					s='['+str+']';
+					s=JSON.parse(s);
+                },
+				error:function () {
+					console.log("loadCarouseArticle() error!");
+                }
+			})
+			return s;
+        }
+	</script>
+
+	<body>
+		<header>
+			<div id="hgtopnav">
+				<ul>
+					<li><img class="top-icon" src="../images/icon.jpg" /></li>
+					<li><input class="top-search" /></li>
+					<li><p class="top-write">写博客</p></li>
+					<li><p class="regist-login">登陆 | 注册</p></li>
+					<li style="position: relative;" id="select-fa">
+						<img class="user-head" src="../images/02.jpg" onclick="showUserSelect()"/>
+						<div id="user-select">
+							<ul>
+								<li><a href="#">我的文章</a></li>
+								<li><a href="#">消息<span style="color: #c92027;">(1)</span></a></li>
+								<li><a href="#">账号设置</a></li>
+								<li><a href="#">退出</a></li>
+							</ul>
+						</div>
+						<script>
+							function showUserSelect(){
+								$("#user-select").show();
+							}
+						</script>
+					</li>
+				</ul>
+			</div>
+		</header>
+		<article style="margin-top: 1px">
+			<div class="l_box f_l" style="background: #FFFFFF;">
+				<div class="banner">
+					<div id="slide-holder">
+						<div id="slide-runner">
+							<div id="slide-controls">
+								<p id="slide-client" class="text"><strong></strong><span></span></p>
+								<p id="slide-desc" class="text"></p>
+								<p id="slide-nav"></p>
+							</div>
+						</div>
+					</div>
+					<script>
+                        if(!window.slider) {
+                            var slider = {};
+                        }
+                        slider.data = loadCarouseArticle();
+					</script>
+				</div>
+				<!-- banner代码 结束 -->
+				<div class="topnews" id="article-recommends">
+					<h2>
+						<b>文章</b>推荐
+					</h2>
+				</div>
+			</div>
+			<div class="r_box f_r" style="background: #FFFFFF;">
+				<div class="tit01">
+					<h3>关注我</h3>
+					<div class="gzwm">
+						<ul>
+							<li>
+								<a class="xlwb" href="#" target="_blank">新浪微博</a>
+							</li>
+							<li>
+								<a class="txwb" href="#" target="_blank">腾讯微博</a>
+							</li>
+							<li>
+								<a class="rss" href="portal.php?mod=rss" target="_blank">RSS</a>
+							</li>
+							<li>
+								<a class="wx" href="mailto:admin@admin.com">邮箱</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<!--tit01 end-->
+				<div class="ad300x100" > <img src="/images/ad300x100.jpg" style="height: 100px;width: 280px;"> </div>
+				<div class="moreSelect" id="lp_right_select">
+					<script>
+						window.onload = function() {
+							var oLi = document.getElementById("tab").getElementsByTagName("li");
+							var oUl = document.getElementById("ms-main").getElementsByTagName("div");
+
+							for(var i = 0; i < oLi.length; i++) {
+								oLi[i].index = i;
+								oLi[i].onmouseover = function() {
+									for(var n = 0; n < oLi.length; n++) oLi[n].className = "";
+									this.className = "cur";
+									for(var n = 0; n < oUl.length; n++) oUl[n].style.display = "none";
+									oUl[this.index].style.display = "block"
+								}
+							}
+						}
+					</script>
+					<div class="ms-top">
+						<ul class="hd" id="tab">
+							<li class="cur">
+								<a href="/">点击排行</a>
+							</li>
+							<li>
+								<a href="/">最新文章</a>
+							</li>
+							<li>
+								<a href="/">站长推荐</a>
+							</li>
+						</ul>
+					</div>
+					<div class="ms-main" id="ms-main">
+						<div style="display: block;" class="bd bd-news" id="click-top">
+							<!--<ul>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">住在手机里的朋友</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">教你怎样用欠费手机拨打电话</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">原来以为，一个人的勇敢是，删掉他的手机号码...</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">手机的16个惊人小秘密，据说99.999%的人都不知</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">你面对的是生活而不是手机</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">豪雅手机正式发布! 在法国全手工打造的奢侈品</a>-->
+								<!--</li>-->
+							<!--</ul>-->
+						</div>
+						<div class="bd bd-news" id="new-top">
+							<!--<ul>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">原来以为，一个人的勇敢是，删掉他的手机号码...</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">手机的16个惊人小秘密，据说99.999%的人都不知</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">住在手机里的朋友</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">教你怎样用欠费手机拨打电话</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">你面对的是生活而不是手机</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">豪雅手机正式发布! 在法国全手工打造的奢侈品</a>-->
+								<!--</li>-->
+							<!--</ul>-->
+						</div>
+						<div class="bd bd-news" id="recommend-top">
+							<!--<ul>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">手机的16个惊人小秘密，据说99.999%的人都不知</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">你面对的是生活而不是手机</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">住在手机里的朋友</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">豪雅手机正式发布! 在法国全手工打造的奢侈品</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">教你怎样用欠费手机拨打电话</a>-->
+								<!--</li>-->
+								<!--<li>-->
+									<!--<a href="/" target="_blank">原来以为，一个人的勇敢是，删掉他的手机号码...</a>-->
+								<!--</li>-->
+							<!--</ul>-->
+						</div>
+					</div>
+					<!--ms-main end -->
+				</div>
+				<!--切换卡 moreSelect end -->
+
+				<div class="cloud" id="cloud">
+					<h3>标签云</h3>
+					<!--<ul>-->
+						<!--<li>-->
+							<!--<a href="/">个人博客</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">web开发</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">前端设计</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">Html</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">CSS3</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">Html5+css3</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">百度</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">Javasript</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">web开发</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">前端设计</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">Html</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">CSS3</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">Html5+css3</a>-->
+						<!--</li>-->
+						<!--<li>-->
+							<!--<a href="/">百度</a>-->
+						<!--</li>-->
+					<!--</ul>-->
+				</div>
+				<div class="tuwen">
+					<h3>图文推荐</h3>
+					<ul>
+						<li>
+							<a href="/"><img src="/images/01.jpg"><b>住在手机里的朋友</b></a>
+							<p><span class="tulanmu"><a href="/">手机配件</a></span><span class="tutime">2015-02-15</span></p>
+						</li>
+						<li>
+							<a href="/"><img src="/images/02.jpg"><b>教你怎样用欠费手机拨打电话</b></a>
+							<p><span class="tulanmu"><a href="/">手机配件</a></span><span class="tutime">2015-02-15</span></p>
+						</li>
+						<li>
+							<a href="/" title="手机的16个惊人小秘密，据说99.999%的人都不知"><img src="/images/03.jpg"><b>手机的16个惊人小秘密，据说...</b></a>
+							<p><span class="tulanmu"><a href="/">手机配件</a></span><span class="tutime">2015-02-15</span></p>
+						</li>
+						<li>
+							<a href="/"><img src="/images/06.jpg"><b>住在手机里的朋友</b></a>
+							<p><span class="tulanmu"><a href="/">手机配件</a></span><span class="tutime">2015-02-15</span></p>
+						</li>
+						<li>
+							<a href="/"><img src="/images/04.jpg"><b>教你怎样用欠费手机拨打电话</b></a>
+							<p><span class="tulanmu"><a href="/">手机配件</a></span><span class="tutime">2015-02-15</span></p>
+						</li>
+					</ul>
+				</div>
+				<div class="ad"> <img src="/images/03.jpg"> </div>
+				<div class="links">
+					<h3><span>[<a href="/">申请友情链接</a>]</span>友情链接</h3>
+					<ul>
+						<li>
+							<a href="/">杨青个人博客</a>
+						</li>
+						<li>
+							<a href="/">web开发</a>
+						</li>
+						<li>
+							<a href="/">前端设计</a>
+						</li>
+						<li>
+							<a href="/">Html</a>
+						</li>
+						<li>
+							<a href="/">CSS3</a>
+						</li>
+						<li>
+							<a href="/">Html5+css3</a>
+						</li>
+						<li>
+							<a href="/">百度</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<!--r_box end -->
+		</article>
+		<footer>
+			<p class="ft-copyright">混动动力火锅博客 Design by xxx 蜀ICP备xxxx号-1</p>
+			<div id="tbox">
+				<a id="togbook" href="javascript:void(0)"></a>
+				<span id="gotop" onclick="goTop()" style="cursor: pointer"></span>
+                <script>
+                    function goTop() {
+                        document.body.scrollTop = document.documentElement.scrollTop = 0;
+                    }
+                </script>
+			</div>
+		</footer>
+	</body>
+
+</html>

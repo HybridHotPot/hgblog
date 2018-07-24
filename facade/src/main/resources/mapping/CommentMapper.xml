@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huoguo.dao.CommentMapper" >
+  <resultMap id="BaseResultMap" type="com.huoguo.bean.Comment" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="picture" property="picture" jdbcType="VARCHAR" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="time" property="time" jdbcType="DATE" />
+    <result column="likeNumber" property="likenumber" jdbcType="INTEGER" />
+    <result column="article_id" property="articleId" jdbcType="INTEGER" />
+    <result column="from_uid" property="fromUid" jdbcType="INTEGER" />
+    <result column="to_cid" property="toCid" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.huoguo.bean.Comment" extends="BaseResultMap" >
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, picture, username, time, likeNumber, article_id, from_uid, to_cid
+  </sql>
+  <sql id="Blob_Column_List" >
+    content
+  </sql>
+  <select id="findNumberByArticle" resultType="java.lang.Integer">
+    SELECT COUNT(*) FROM comment WHERE comment.article_id = #{articleId}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from comment
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from comment
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.huoguo.bean.Comment" >
+    insert into comment (id, picture, username, 
+      time, likeNumber, article_id, 
+      from_uid, to_cid, content
+      )
+    values (#{id,jdbcType=INTEGER}, #{picture,jdbcType=VARCHAR}, #{username,jdbcType=VARCHAR}, 
+      #{time,jdbcType=DATE}, #{likenumber,jdbcType=INTEGER}, #{articleId,jdbcType=INTEGER}, 
+      #{fromUid,jdbcType=INTEGER}, #{toCid,jdbcType=INTEGER}, #{content,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.huoguo.bean.Comment" >
+    insert into comment
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="picture != null" >
+        picture,
+      </if>
+      <if test="username != null" >
+        username,
+      </if>
+      <if test="time != null" >
+        time,
+      </if>
+      <if test="likenumber != null" >
+        likeNumber,
+      </if>
+      <if test="articleId != null" >
+        article_id,
+      </if>
+      <if test="fromUid != null" >
+        from_uid,
+      </if>
+      <if test="toCid != null" >
+        to_cid,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="picture != null" >
+        #{picture,jdbcType=VARCHAR},
+      </if>
+      <if test="username != null" >
+        #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="time != null" >
+        #{time,jdbcType=DATE},
+      </if>
+      <if test="likenumber != null" >
+        #{likenumber,jdbcType=INTEGER},
+      </if>
+      <if test="articleId != null" >
+        #{articleId,jdbcType=INTEGER},
+      </if>
+      <if test="fromUid != null" >
+        #{fromUid,jdbcType=INTEGER},
+      </if>
+      <if test="toCid != null" >
+        #{toCid,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.huoguo.bean.Comment" >
+    update comment
+    <set >
+      <if test="picture != null" >
+        picture = #{picture,jdbcType=VARCHAR},
+      </if>
+      <if test="username != null" >
+        username = #{username,jdbcType=VARCHAR},
+      </if>
+      <if test="time != null" >
+        time = #{time,jdbcType=DATE},
+      </if>
+      <if test="likenumber != null" >
+        likeNumber = #{likenumber,jdbcType=INTEGER},
+      </if>
+      <if test="articleId != null" >
+        article_id = #{articleId,jdbcType=INTEGER},
+      </if>
+      <if test="fromUid != null" >
+        from_uid = #{fromUid,jdbcType=INTEGER},
+      </if>
+      <if test="toCid != null" >
+        to_cid = #{toCid,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.huoguo.bean.Comment" >
+    update comment
+    set picture = #{picture,jdbcType=VARCHAR},
+      username = #{username,jdbcType=VARCHAR},
+      time = #{time,jdbcType=DATE},
+      likeNumber = #{likenumber,jdbcType=INTEGER},
+      article_id = #{articleId,jdbcType=INTEGER},
+      from_uid = #{fromUid,jdbcType=INTEGER},
+      to_cid = #{toCid,jdbcType=INTEGER},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.huoguo.bean.Comment" >
+    update comment
+    set picture = #{picture,jdbcType=VARCHAR},
+      username = #{username,jdbcType=VARCHAR},
+      time = #{time,jdbcType=DATE},
+      likeNumber = #{likenumber,jdbcType=INTEGER},
+      article_id = #{articleId,jdbcType=INTEGER},
+      from_uid = #{fromUid,jdbcType=INTEGER},
+      to_cid = #{toCid,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

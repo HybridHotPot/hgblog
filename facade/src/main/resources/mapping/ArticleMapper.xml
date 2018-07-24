@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.huoguo.dao.ArticleMapper" >
+  <resultMap id="BaseResultMap" type="com.huoguo.bean.Article" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="time" property="time" jdbcType="DATE" />
+    <result column="pv" property="pv" jdbcType="INTEGER" />
+    <result column="likeNumber" property="likenumber" jdbcType="INTEGER" />
+    <result column="cover" property="cover" jdbcType="VARCHAR" />
+    <result column="isRecommend" property="isrecommend" jdbcType="TINYINT" />
+    <result column="isPrivate" property="isprivate" jdbcType="TINYINT" />
+    <result column="description" property="description" jdbcType="VARCHAR" />
+    <result column="user_id" property="userId" jdbcType="INTEGER" />
+    <result column="articleCategory_id" property="articlecategoryId" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="ResultMapWithBLOBs" type="com.huoguo.bean.Article" extends="BaseResultMap" >
+    <result column="content" property="content" jdbcType="LONGVARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    id, title, time, pv, likeNumber, cover, isRecommend, isPrivate, description, user_id, 
+    articleCategory_id
+  </sql>
+  <sql id="Blob_Column_List" >
+    content
+  </sql>
+  <select id="findArticleNumByCategory" resultType="java.lang.Integer">
+    SELECT COUNT(*) FROM article WHERE articleCategory_id = #{categoryId}
+  </select>
+  <select id="getUidByAid" resultType="java.lang.Integer">
+    SELECT user_id FROM article WHERE id = #{id}
+  </select>
+  <select id="find" resultType="java.lang.String">
+    SELECT content FROM article WHERE id = #{id}
+  </select>
+  <select id="findTopRecommend" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM article ORDER BY isRecommend DESC limit #{limit}
+  </select>
+  <select id="findTopNew" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM article ORDER BY time DESC limit #{limit}
+  </select>
+  <select id="findTopClick" resultMap="BaseResultMap">
+    SELECT <include refid="Base_Column_List"/> FROM article ORDER BY pv DESC limit #{limit}
+  </select>
+  <select id="findRecommend" resultMap="ResultMapWithBLOBs">
+    SELECT * FROM article limit #{0},#{1}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="ResultMapWithBLOBs" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    ,
+    <include refid="Blob_Column_List" />
+    from article
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from article
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+  <insert id="insert" parameterType="com.huoguo.bean.Article" >
+    insert into article (id, title, time, 
+      pv, likeNumber, cover, 
+      isRecommend, isPrivate, description, 
+      user_id, articleCategory_id, content
+      )
+    values (#{id,jdbcType=INTEGER}, #{title,jdbcType=VARCHAR}, #{time,jdbcType=DATE}, 
+      #{pv,jdbcType=INTEGER}, #{likenumber,jdbcType=INTEGER}, #{cover,jdbcType=VARCHAR}, 
+      #{isrecommend,jdbcType=TINYINT}, #{isprivate,jdbcType=TINYINT}, #{description,jdbcType=VARCHAR}, 
+      #{userId,jdbcType=INTEGER}, #{articlecategoryId,jdbcType=INTEGER}, #{content,jdbcType=LONGVARCHAR}
+      )
+  </insert>
+  <insert id="insertSelective" parameterType="com.huoguo.bean.Article" >
+    insert into article
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="title != null" >
+        title,
+      </if>
+      <if test="time != null" >
+        time,
+      </if>
+      <if test="pv != null" >
+        pv,
+      </if>
+      <if test="likenumber != null" >
+        likeNumber,
+      </if>
+      <if test="cover != null" >
+        cover,
+      </if>
+      <if test="isrecommend != null" >
+        isRecommend,
+      </if>
+      <if test="isprivate != null" >
+        isPrivate,
+      </if>
+      <if test="description != null" >
+        description,
+      </if>
+      <if test="userId != null" >
+        user_id,
+      </if>
+      <if test="articlecategoryId != null" >
+        articleCategory_id,
+      </if>
+      <if test="content != null" >
+        content,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="title != null" >
+        #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="time != null" >
+        #{time,jdbcType=DATE},
+      </if>
+      <if test="pv != null" >
+        #{pv,jdbcType=INTEGER},
+      </if>
+      <if test="likenumber != null" >
+        #{likenumber,jdbcType=INTEGER},
+      </if>
+      <if test="cover != null" >
+        #{cover,jdbcType=VARCHAR},
+      </if>
+      <if test="isrecommend != null" >
+        #{isrecommend,jdbcType=TINYINT},
+      </if>
+      <if test="isprivate != null" >
+        #{isprivate,jdbcType=TINYINT},
+      </if>
+      <if test="description != null" >
+        #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="userId != null" >
+        #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="articlecategoryId != null" >
+        #{articlecategoryId,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="com.huoguo.bean.Article" >
+    update article
+    <set >
+      <if test="title != null" >
+        title = #{title,jdbcType=VARCHAR},
+      </if>
+      <if test="time != null" >
+        time = #{time,jdbcType=DATE},
+      </if>
+      <if test="pv != null" >
+        pv = #{pv,jdbcType=INTEGER},
+      </if>
+      <if test="likenumber != null" >
+        likeNumber = #{likenumber,jdbcType=INTEGER},
+      </if>
+      <if test="cover != null" >
+        cover = #{cover,jdbcType=VARCHAR},
+      </if>
+      <if test="isrecommend != null" >
+        isRecommend = #{isrecommend,jdbcType=TINYINT},
+      </if>
+      <if test="isprivate != null" >
+        isPrivate = #{isprivate,jdbcType=TINYINT},
+      </if>
+      <if test="description != null" >
+        description = #{description,jdbcType=VARCHAR},
+      </if>
+      <if test="userId != null" >
+        user_id = #{userId,jdbcType=INTEGER},
+      </if>
+      <if test="articlecategoryId != null" >
+        articleCategory_id = #{articlecategoryId,jdbcType=INTEGER},
+      </if>
+      <if test="content != null" >
+        content = #{content,jdbcType=LONGVARCHAR},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKeyWithBLOBs" parameterType="com.huoguo.bean.Article" >
+    update article
+    set title = #{title,jdbcType=VARCHAR},
+      time = #{time,jdbcType=DATE},
+      pv = #{pv,jdbcType=INTEGER},
+      likeNumber = #{likenumber,jdbcType=INTEGER},
+      cover = #{cover,jdbcType=VARCHAR},
+      isRecommend = #{isrecommend,jdbcType=TINYINT},
+      isPrivate = #{isprivate,jdbcType=TINYINT},
+      description = #{description,jdbcType=VARCHAR},
+      user_id = #{userId,jdbcType=INTEGER},
+      articleCategory_id = #{articlecategoryId,jdbcType=INTEGER},
+      content = #{content,jdbcType=LONGVARCHAR}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="com.huoguo.bean.Article" >
+    update article
+    set title = #{title,jdbcType=VARCHAR},
+      time = #{time,jdbcType=DATE},
+      pv = #{pv,jdbcType=INTEGER},
+      likeNumber = #{likenumber,jdbcType=INTEGER},
+      cover = #{cover,jdbcType=VARCHAR},
+      isRecommend = #{isrecommend,jdbcType=TINYINT},
+      isPrivate = #{isprivate,jdbcType=TINYINT},
+      description = #{description,jdbcType=VARCHAR},
+      user_id = #{userId,jdbcType=INTEGER},
+      articleCategory_id = #{articlecategoryId,jdbcType=INTEGER}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
